@@ -1,0 +1,7 @@
+[coverage]
+ignore-tests = true
+#engine = "Auto"
+
+[report]
+output-dir = "target/coverage"
+out = ["Html", "Xml", "Json", "Lcov"]

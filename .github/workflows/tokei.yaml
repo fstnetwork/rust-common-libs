@@ -1,0 +1,37 @@
+name: Lines of code
+
+on:
+  push:
+    branches:
+      - ci/*
+      - main
+      - develop
+      - release/*
+      - staging
+  pull_request:
+
+jobs:
+  tokei:
+    name: Tokei
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install tokei
+        run: |
+          if ! command -v tokei &> /dev/null
+          then
+            cargo +stable install tokei
+          fi
+
+      - name: Run tokei
+        id: tokei
+        run: |
+          ./dev-support/bin/lines-of-code

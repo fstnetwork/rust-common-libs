@@ -1,0 +1,62 @@
+name: Audit
+
+on:
+  push:
+    paths:
+      - .github/**
+      - "**/Cargo.toml"
+      - deny.toml
+  pull_request:
+    paths:
+      - .github/**
+      - "**/Cargo.toml"
+      - deny.toml
+  schedule:
+    - cron: 0 21 * * *
+
+env:
+  CI: 1
+  CARGO_TERM_COLOR: always
+  NIGHTLY_TOOLCHAIN: nightly-2022-04-13
+
+jobs:
+  audit:
+    name: Security autdit
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            pkg-config \
+            libssl-dev
+
+      - uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  deny:
+    name: Check dependencies
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        checks:
+          - advisories
+          - bans licenses sources
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check ${{ matrix.checks }}

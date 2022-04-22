@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# shellcheck source=/dev-support/lib/logging
+. "${SCRIPT_DIR}"/../lib/logging
+
+info "Formatting Rust with \`rustfmt\`"
+"${SCRIPT_DIR}"/format-rust
+echo
+
+info "Formatting shell script with \`shfmt\`"
+shfmt -w "${SCRIPT_DIR}"/../..
+echo
+
+info "Formatting Nix with \`nixpkgs-fmt\`"
+nixpkgs-fmt "${SCRIPT_DIR}"/../..
+echo
+
+info "Formatting JavaScript, TypeScript, Markdown, JSON, YAML with \`prettier\`"
+prettier -w '**/*.{js,ts,md,json,yaml}'
+echo

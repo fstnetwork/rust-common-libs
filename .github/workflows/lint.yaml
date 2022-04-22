@@ -1,0 +1,84 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - ci/*
+      - main
+      - develop
+      - release/*
+      - staging
+  pull_request:
+
+env:
+  CI: 1
+  CARGO_TERM_COLOR: always
+  NIGHTLY_TOOLCHAIN: nightly-2022-04-13
+
+jobs:
+  format:
+    name: Lint format
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: Install nixpkgs-fmt
+        run: |
+          if ! command -v nixpkgs-fmt &> /dev/null
+          then
+            cargo +stable install nixpkgs-fmt
+          fi
+
+      - name: Run shfmt, shellcheck, checkbashisms
+        uses: luizm/action-sh-checker@v0.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          sh_checker_comment: true
+          sh_checker_checkbashisms_enable: true
+
+      - name: Run nixpkgs-fmt
+        run: |
+          nixpkgs-fmt --check .
+
+      - name: Run prettier
+        uses: creyD/prettier_action@v4.2
+        with:
+          dry: true
+          prettier_options: --check **/*.{js,ts,md,json,yaml}
+
+  commit:
+    name: Lint commit
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run commitlint
+        uses: wagoid/commitlint-github-action@v4.1.11
+        with:
+          firstParent: false
+
+  codespell:
+    name: Codespell
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: codespell-project/codespell-problem-matcher@v1
+
+      - name: Codespell
+        uses: codespell-project/actions-codespell@master

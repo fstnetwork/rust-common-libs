@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+export TOOLCHAIN=nightly-2022-04-13
+export CARGO_ARGS=(
+  --workspace
+  --bins
+  --examples
+  --tests
+  --benches
+  --all-targets
+  --all-features
+)
+export UNIT_TEST_ARGS=(
+  --workspace
+)

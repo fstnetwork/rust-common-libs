@@ -1,0 +1,367 @@
+name: Rust
+
+on:
+  push:
+    branches:
+      - ci/*
+      - main
+      - develop
+      - release/*
+      - staging
+  pull_request:
+    paths:
+      - .github/**
+      - tools/**
+      - Cargo.lock
+      - Cargo.toml
+      - deny.toml
+      - rust-toolchain.toml
+      - rustfmt.toml
+      - tarpaulin.toml
+
+env:
+  CI: 1
+  # sccache
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  SCCACHE_REGION: us-west-2
+  SCCACHE_BUCKET: sccache-us-west-2
+  SCCACHE_S3_USE_SSL: true
+  # Rust toolchain
+  NIGHTLY_TOOLCHAIN: nightly-2022-04-13
+  CARGO_TERM_COLOR: always
+  CARGO_ARGS: --workspace --bins --examples --tests --benches --all-targets --all-features
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rustfmt:
+    name: Check rust format
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+          components: rustfmt
+
+      - name: cargo fmt --version
+        run: |
+          cargo fmt --version
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all --verbose
+
+  udeps:
+    name: Check unused dependencies
+    runs-on: [self-hosted, aws]
+    needs:
+      - rustfmt
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo ./dev-support/bin/install-deps
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+          components: rustfmt
+
+      - name: Sccache
+        uses: ./.github/actions/sccache
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo-udeps
+        uses: aig787/cargo-udeps-action@v1
+        with:
+          version: latest
+          args: ${{ env.CARGO_ARGS }}
+
+      - name: Post Sccache
+        run: |
+          sccache -s
+
+  clippy:
+    name: Clippy
+    runs-on: [self-hosted, aws]
+    needs:
+      - rustfmt
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo ./dev-support/bin/install-deps
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+          components: clippy,rustfmt
+
+      - name: Sccache
+        uses: ./.github/actions/sccache
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: cargo clippy --version
+        run: |
+          cargo clippy --version
+
+      - name: Run cargo clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: ${{ env.CARGO_ARGS }}
+
+      - name: Post Sccache
+        run: |
+          sccache -s
+
+  test:
+    name: Test
+    runs-on: [self-hosted, aws]
+    needs:
+      - clippy
+      - udeps
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - stable
+          # - beta
+          # - nightly
+        mode:
+          - debug
+          - release
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo ./dev-support/bin/install-deps
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain == 'nightly' && env.NIGHTLY_TOOLCHAIN || matrix.toolchain }}
+          profile: minimal
+          override: true
+          components: rustfmt
+
+      - name: Sccache
+        uses: ./.github/actions/sccache
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --workspace --no-fail-fast ${{ matrix.mode == 'release' && '--release' || '' }} -- --nocapture --test -Z unstable-options --report-time
+
+      - name: Post Sccache
+        run: |
+          sccache -s
+
+  miri:
+    name: Miri
+    runs-on: self-hosted
+    needs:
+      - clippy
+      - udeps
+    env:
+      CARGO_BUILD_RUSTC_WRAPPER: ""
+      MIRIFLAGS: -Zmiri-symbolic-alignment-check
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          # - stable
+          # - beta
+          - nightly
+        mode:
+          # - debug
+          - release
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo ./dev-support/bin/install-deps
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain == 'nightly' && env.NIGHTLY_TOOLCHAIN || matrix.toolchain }}
+          override: true
+          components: miri,rust-src,rustfmt
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: cargo miri --version
+        run: |
+          cargo miri setup
+          cargo miri --version
+
+      - name: Run cargo miri
+        uses: actions-rs/cargo@v1
+        with:
+          command: miri
+          args: test --workspace --no-fail-fast ${{ matrix.mode == 'release' && '--release' || '' }} -- --nocapture
+
+  doc:
+    name: Doc
+    runs-on: [self-hosted, aws]
+    needs:
+      - clippy
+      - udeps
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo ./dev-support/bin/install-deps
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+          components: clippy,rustfmt
+
+      - name: Sccache
+        uses: ./.github/actions/sccache
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo doc
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --workspace --no-deps --bins --all-features
+
+      - name: Post Sccache
+        run: |
+          sccache -s
+
+  coverage:
+    name: Coverage
+    runs-on: [self-hosted, aws]
+    needs:
+      - clippy
+      - udeps
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo ./dev-support/bin/install-deps
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          override: true
+          components: rustfmt
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+
+      # - name: Upload to Codecov
+      #   uses: codecov/codecov-action@v3.1.0
+      #   env:
+      #     TOOLCHAIN: ${{ env.NIGHTLY_TOOLCHAIN }}
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     env_vars: TOOLCHAIN
+      #     flags: unittests
+      #     fail_ci_if_error: true

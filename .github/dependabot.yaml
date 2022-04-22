@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: "/"
+    # labels: []
+    schedule:
+      interval: "daily"
+      time: "21:00"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: docker
+    directory: "/dev-support/containers/debian"
+    # labels: []
+    schedule:
+      interval: "daily"
+      time: "21:00"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: docker
+    directory: "/dev-support/containers/scratch"
+    # labels: []
+    schedule:
+      interval: "daily"
+      time: "21:00"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    # labels: []
+    schedule:
+      interval: "daily"
+      time: "21:00"
+    open-pull-requests-limit: 10

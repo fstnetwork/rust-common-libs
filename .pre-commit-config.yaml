@@ -1,0 +1,66 @@
+default_stages: [commit]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+        exclude: '.*\.rs$'
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-yaml
+        exclude: charts/[^/]+/templates/.+.yaml
+      - id: end-of-file-fixer
+        exclude: '.*\.rs$'
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: commitlint
+        description: Lint your commit messages
+        stages: [commit-msg]
+        language: system
+        entry: commitlint --edit
+        always_run: true
+      - id: nixpkgs-fmt
+        name: nixpkgs-fmt
+        description: Format nix code with nixpkgs-fmt.
+        entry: nixpkgs-fmt
+        language: system
+        types: [nix]
+      - id: clang-format
+        name: clang-format
+        description: Format C/C++/Java/JavaScript/Objective-C/Protobuf/C# code
+        entry: clang-format
+        language: system
+        types: [proto]
+      - id: prettier
+        name: prettier
+        entry: prettier --check --ignore-unknown
+        language: system
+      - id: rust-format
+        name: rust-format
+        description: Formats all bin and lib files of the current crate using rustfmt
+        entry: ./dev-support/bin/format-rust
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-check
+        name: cargo check
+        description: Check a local package and all of its dependencies for errors
+        entry: cargo check
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: clippy
+        name: clippy
+        description: Checks a package to catch common mistakes and improve your Rust code
+        entry: ./dev-support/bin/cargo-clippy-all
+        language: system
+        types: [rust]
+        pass_filenames: false
