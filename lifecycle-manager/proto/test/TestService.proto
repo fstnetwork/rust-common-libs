@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package lifecycle_manager.test;
+
+import "google/protobuf/empty.proto";
+
+service Test {
+  rpc SayHello(google.protobuf.Empty) returns (SayHelloResponse);
+}
+
+message SayHelloResponse {
+  string msg = 1;
+}
