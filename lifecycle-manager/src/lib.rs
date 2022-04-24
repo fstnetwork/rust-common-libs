@@ -140,13 +140,6 @@ mod tests {
     use async_trait::async_trait;
     use portpicker::pick_unused_port;
     use snafu::Snafu;
-    use tonic::{Request, Response};
-
-    use self::proto::{test_server, test_server::TestServer, SayHelloResponse};
-
-    mod proto {
-        tonic::include_proto!("lifecycle_manager.test");
-    }
 
     use super::{LifecycleManager, ShutdownSignal, Worker};
 
@@ -175,46 +168,6 @@ mod tests {
 
             shutdown_signal.await;
             println!("DummyWorker {} is shutting down gracefully", self.num);
-            Ok(())
-        }
-    }
-
-    #[derive(Default)]
-    struct TonicServer;
-
-    #[async_trait]
-    impl Worker for TonicServer {
-        type Error = Error;
-
-        fn name(&self) -> &str { "tonic-server" }
-
-        async fn serve(self, shutdown_signal: ShutdownSignal) -> Result<(), Error> {
-            #[derive(Debug, Default)]
-            pub struct TestService;
-
-            #[tonic::async_trait]
-            impl test_server::Test for TestService {
-                async fn say_hello(
-                    &self,
-                    _request: Request<()>,
-                ) -> Result<tonic::Response<SayHelloResponse>, tonic::Status> {
-                    Ok(Response::new(SayHelloResponse { msg: "hello".to_string() }))
-                }
-            }
-
-            let port = pick_unused_port().unwrap();
-            let test_service = TestService::default();
-            let server = tonic::transport::Server::builder()
-                .add_service(TestServer::new(test_service))
-                .serve_with_shutdown(
-                    SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port),
-                    shutdown_signal,
-                );
-
-            println!("Tonic server is up");
-            server.await.unwrap();
-            println!("Tonic server is down");
-
             Ok(())
         }
     }
@@ -342,21 +295,6 @@ mod tests {
         LifecycleManager::<Error>::new()
             .add_worker(AxumServer::default())
             .add_worker(DummyWorker::new(0))
-            .serve()
-            .await?;
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    #[cfg_attr(miri, ignore)]
-    async fn test_with_axum_server_and_tonic_server() -> Result<(), Error> {
-        let shutdown_signal = spawn_killer_task();
-
-        LifecycleManager::<Error>::new()
-            .with_custom_shutdown(shutdown_signal)
-            .add_worker(TonicServer::default())
-            .add_worker(AxumServer::default())
             .serve()
             .await?;
 
