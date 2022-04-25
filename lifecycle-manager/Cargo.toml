@@ -1,0 +1,27 @@
+[package]
+name = "lifecycle-manager"
+version = "0.1.0"
+authors = ["FST Network <dev@fstk.io>"]
+license = "MIT"
+edition = "2021"
+repository = "https://github.com/fstnetwork/rust-utils"
+readme = "README.md"
+description = "Lifecycle Manager built with tokio"
+keywords = ["UNIX signal"]
+categories = ["utilities"]
+
+[dependencies]
+async-trait = "0.1.53"
+futures = "0.3.21"
+tokio = { version = "1", features = ["rt-multi-thread", "signal", "sync", "time"] }
+
+tracing = "0.1.34"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "sync", "time"] }
+
+axum = "0.5.3"
+
+libc = "0.2.124"
+portpicker = "0.1.1"
+snafu = "0.7.0"
