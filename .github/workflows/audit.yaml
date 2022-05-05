@@ -21,7 +21,7 @@ env:
 
 jobs:
   audit:
-    name: Security autdit
+    name: Security audit
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
