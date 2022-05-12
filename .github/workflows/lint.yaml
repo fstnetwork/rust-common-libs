@@ -68,7 +68,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run commitlint
-        uses: wagoid/commitlint-github-action@v4.1.11
+        uses: wagoid/commitlint-github-action@v4.1.12
         with:
           firstParent: false
 
