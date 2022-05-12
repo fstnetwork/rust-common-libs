@@ -1,0 +1,17 @@
+title: "schemars #84"
+type: object
+properties:
+  enum:
+    type: object
+    properties:
+      variantOne:
+        type: object
+      variantTwo:
+        type: object
+    oneOf:
+      - properties:
+          variantOne: {}
+        required: [variantOne]
+      - properties:
+          variantTwo: {}
+        required: [variantTwo]

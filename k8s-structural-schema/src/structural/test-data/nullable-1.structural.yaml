@@ -1,0 +1,8 @@
+title: nullable 1
+type: object
+properties:
+  foo:
+    type: object
+allOf:
+  - properties:
+      foo: {}
