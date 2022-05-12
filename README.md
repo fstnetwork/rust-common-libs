@@ -4,6 +4,8 @@
 
 ## Crates in this Repository
 
+- [`k8s-structural-schema`](./k8s-structural-schema)
+  Kubernetes structural schema utilities for [`schemars`](https://crates.io/crates/schemars)
 - [`lifecycle-manager`](./lifecycle-manager)
   a utility for spawning background workers and handling UNIX signals
 
