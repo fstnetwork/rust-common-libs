@@ -60,7 +60,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all --verbose
+          args: --all --verbose --check
 
   udeps:
     name: Check unused dependencies
