@@ -1,0 +1,25 @@
+title: example 3
+type: object
+properties:
+  foo:
+    type: string
+    pattern: "abc"
+  metadata:
+    type: object
+    properties:
+      name:
+        type: string
+        pattern: "^a"
+      finalizers:
+        type: array
+        items:
+          type: string
+          pattern: "my-finalizer"
+anyOf:
+  - properties:
+      bar:
+        type: integer
+        minimum: 42
+    required:
+      - bar
+    description: "foo bar object"

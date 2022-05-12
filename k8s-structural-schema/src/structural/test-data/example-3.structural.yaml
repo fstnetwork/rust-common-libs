@@ -1,0 +1,21 @@
+title: example 3
+type: object
+# description: "foo bar object"
+properties:
+  foo:
+    type: string
+    pattern: "abc"
+  bar:
+    type: integer
+  metadata:
+    type: object
+    properties:
+      name:
+        type: string
+        pattern: "^a"
+anyOf:
+  - properties:
+      bar:
+        minimum: 42
+    required:
+      - bar

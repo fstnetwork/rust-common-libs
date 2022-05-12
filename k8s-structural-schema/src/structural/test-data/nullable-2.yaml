@@ -1,0 +1,11 @@
+title: nullable 2
+type: object
+allOf:
+  - properties:
+      foo:
+        type: object
+        nullable: false
+  - properties:
+      foo:
+        type: object
+        nullable: true
