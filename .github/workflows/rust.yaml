@@ -10,8 +10,9 @@ on:
       - staging
   pull_request:
     paths:
-      - .github/**
-      - tools/**
+      - "**/Cargo.toml"
+      - "**/src/**"
+      - ".github/**"
       - Cargo.lock
       - Cargo.toml
       - deny.toml
