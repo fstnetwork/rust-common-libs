@@ -1,0 +1,25 @@
+[package]
+name = "k8s-structural-schema"
+version = "0.1.0"
+authors = ["FST Network <dev@fstk.io>"]
+license = "MIT"
+edition = "2021"
+repository = "https://github.com/fstnetwork/rust-common-utils"
+readme = "README.md"
+description = "Kubernetes structural schema utilities for `schemars`"
+keywords = ["kubernetes", "json-schema"]
+categories = ["utilities"]
+
+[features]
+default = ["backtrace"]
+
+backtrace = ["snafu/backtraces"]
+
+[dependencies]
+schemars = { version = "0.8" }
+serde_json = "1"
+
+snafu = { version = "0.7", default-features = false, features = ["std", "futures"] }
+
+[dev-dependencies]
+serde_yaml = "0.8"

@@ -1,0 +1,6 @@
+title: example 1
+type: object
+allOf:
+  - properties:
+      foo:
+        type: object

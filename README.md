@@ -1,10 +1,12 @@
-# FST Network Rust Utilities Repository
+# FST Network Rust Common Libraries
 
-[![Build Status](https://github.com/fstnetwork/saffron/actions/workflows/rust.yaml/badge.svg?branch=main)](https://github.com/fstnetwork/saffron/actions)
+[![Build Status](https://github.com/fstnetwork/rust-common-libs/actions/workflows/rust.yaml/badge.svg?branch=main)](https://github.com/fstnetwork/rust-common-libs/actions)
 
 ## Crates in this Repository
 
-- [`lifecycle-manager`](https://github.com/fstnetwork/rust-utils)
+- [`k8s-structural-schema`](./k8s-structural-schema)
+  Kubernetes structural schema utilities for [`schemars`](https://crates.io/crates/schemars)
+- [`lifecycle-manager`](./lifecycle-manager)
   a utility for spawning background workers and handling UNIX signals
 
 ## Development

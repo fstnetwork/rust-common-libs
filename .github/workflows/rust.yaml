@@ -10,8 +10,9 @@ on:
       - staging
   pull_request:
     paths:
-      - .github/**
-      - tools/**
+      - "**/Cargo.toml"
+      - "**/src/**"
+      - ".github/**"
       - Cargo.lock
       - Cargo.toml
       - deny.toml
@@ -59,7 +60,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all --verbose
+          args: --all --verbose --check
 
   udeps:
     name: Check unused dependencies
@@ -319,49 +320,49 @@ jobs:
         run: |
           sccache -s
 
-  coverage:
-    name: Coverage
-    runs-on: [self-hosted, aws]
-    needs:
-      - clippy
-      - udeps
-    steps:
-      - uses: actions/checkout@v3
+  # coverage:
+  #   name: Coverage
+  #   runs-on: [self-hosted, aws]
+  #   needs:
+  #     - clippy
+  #     - udeps
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sudo ./dev-support/bin/install-deps
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo ./dev-support/bin/install-deps
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
-          override: true
-          components: rustfmt
+  #     - name: Install Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         profile: minimal
+  #         toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+  #         override: true
+  #         components: rustfmt
 
-      - name: Pre Cache
-        run: |
-          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+  #     - name: Pre Cache
+  #       run: |
+  #         rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
 
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+  #     - name: Cache
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run cargo tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
+  #     - name: Run cargo tarpaulin
+  #       uses: actions-rs/tarpaulin@v0.1
 
-      # - name: Upload to Codecov
-      #   uses: codecov/codecov-action@v3.1.0
-      #   env:
-      #     TOOLCHAIN: ${{ env.NIGHTLY_TOOLCHAIN }}
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     env_vars: TOOLCHAIN
-      #     flags: unittests
-      #     fail_ci_if_error: true
+  #     - name: Upload to Codecov
+  #       uses: codecov/codecov-action@v3.1.0
+  #       env:
+  #         TOOLCHAIN: ${{ env.NIGHTLY_TOOLCHAIN }}
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         env_vars: TOOLCHAIN
+  #         flags: unittests
+  #         fail_ci_if_error: true
