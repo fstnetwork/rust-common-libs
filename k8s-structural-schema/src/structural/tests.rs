@@ -13,7 +13,7 @@ fn check_structural_schema(schema: &[u8], expected: &[u8]) {
         schema.schema,
         expected.schema,
         r#"
- left:
+left:
 {},
 right:
 {}"#,
