@@ -76,6 +76,7 @@ allow = [
   "MIT",
   "MPL-2.0",
   "OpenSSL",
+  "Unicode-DFS-2016",
   "Unlicense",
 ]
 # List of explicitly disallowed licenses
