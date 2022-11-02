@@ -29,7 +29,7 @@ env:
   SCCACHE_BUCKET: sccache-us-west-2
   SCCACHE_S3_USE_SSL: true
   # Rust toolchain
-  NIGHTLY_TOOLCHAIN: nightly-2022-04-13
+  NIGHTLY_TOOLCHAIN: nightly-2022-10-12
   CARGO_TERM_COLOR: always
   CARGO_ARGS: --workspace --bins --examples --tests --benches --all-targets --all-features
 
