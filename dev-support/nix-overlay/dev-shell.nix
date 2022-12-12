@@ -6,7 +6,7 @@ let
   nodejs = pkgs.nodejs-16_x;
   yarn = pkgs.yarn.override { inherit nodejs; };
 in
-mkShell.override { stdenv = llvmPackages.libcxxStdenv; } {
+mkShell {
   buildInputs = with pkgs;
     [
       clang-tools
@@ -25,6 +25,7 @@ mkShell.override { stdenv = llvmPackages.libcxxStdenv; } {
       tokei
 
       rustup
+      rust-bindgen
       sccache
       cargo-deny
       cargo-edit
@@ -34,7 +35,9 @@ mkShell.override { stdenv = llvmPackages.libcxxStdenv; } {
       cmake
       pkg-config
 
-      openssl
+      libpulsar
+      openssl.dev
+      protobuf
 
       # shell
       checkbashisms
@@ -56,6 +59,8 @@ mkShell.override { stdenv = llvmPackages.libcxxStdenv; } {
   shellHook = ''
     export PATH=$PWD/dev-support/bin:$PWD/target/release:$PWD/target/debug:$PATH
   '';
+
+  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
 
   RUST_BACKTRACE = 1;
 

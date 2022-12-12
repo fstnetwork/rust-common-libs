@@ -1,0 +1,13 @@
+diff --git a/lib/CMakeLists.txt b/lib/CMakeLists.txt
+index ae2c8ac..8226251 100644
+--- a/lib/CMakeLists.txt
++++ b/lib/CMakeLists.txt
+@@ -73,7 +73,7 @@ if (BUILD_DYNAMIC_LIB)
+ endif()
+ 
+ include(CheckCXXSymbolExists)
+-check_cxx_symbol_exists(getauxval auvx.h HAVE_AUXV_GETAUXVAL)
++check_cxx_symbol_exists(getauxval sys/auxv.h HAVE_AUXV_GETAUXVAL)
+ if(HAVE_AUXV_GETAUXVAL)
+     add_definitions(-DPULSAR_AUXV_GETAUXVAL_PRESENT)
+ endif()

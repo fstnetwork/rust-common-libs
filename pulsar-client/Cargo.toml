@@ -1,0 +1,24 @@
+[package]
+name = "pulsar-client"
+version = "0.1.0"
+authors = ["FST Network <dev@fstk.io>"]
+license = "MIT"
+edition = "2021"
+repository = "https://github.com/fstnetwork/rust-common-utils"
+readme = "README.md"
+description = "Rust wrapper for libpulsar"
+keywords = ["pulsar", "pulsar-client"]
+categories = ["api-bindings"]
+
+[dependencies]
+pulsar-client-sys = { path = "../pulsar-client-sys" }
+
+tracing = "0.1"
+
+tokio = { version = "1", features = ["sync"] }
+
+snafu = "0.7"
+url = "2"
+
+[dev-dependencies]
+tracing-subscriber = "0.3"

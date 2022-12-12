@@ -13,7 +13,7 @@ info "Formatting Rust with \`rustfmt\`"
 echo
 
 info "Formatting shell script with \`shfmt\`"
-shfmt -w "${SCRIPT_DIR}"/../..
+shfmt -f "${SCRIPT_DIR}"/../.. | grep -v -f "${SCRIPT_DIR}"/../../.shfmtignore | xargs shfmt -l -w
 echo
 
 info "Formatting Nix with \`nixpkgs-fmt\`"
