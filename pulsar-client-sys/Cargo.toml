@@ -1,0 +1,21 @@
+[package]
+name = "pulsar-client-sys"
+version = "0.1.0+3.1.0"
+authors = ["FST Network <dev@fstk.io>"]
+license = "MIT"
+edition = "2021"
+repository = "https://github.com/fstnetwork/rust-common-utils"
+readme = "README.md"
+description = "Native bindings to the libpulsar"
+keywords = ["pulsar", "pulsar-client"]
+categories = ["external-ffi-bindings"]
+
+[features]
+default = ["bindgen", "dynamic-linking"]
+
+dynamic-linking = []
+
+[build-dependencies]
+bindgen = { version = "0.63", optional = true }
+cmake = "0.1"
+

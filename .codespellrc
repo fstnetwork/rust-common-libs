@@ -1,5 +1,5 @@
 [codespell]
-skip = .git,./target
+skip = .git,./target,./pulsar-client-sys/pulsar-client-cpp
 ignore-words = ./dev-support/codespell-ignore
 check-filenames =
 check-hidden =

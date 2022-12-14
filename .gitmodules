@@ -1,0 +1,3 @@
+[submodule "pulsar-client-sys/pulsar-client-cpp"]
+	path = pulsar-client-sys/pulsar-client-cpp
+	url = https://github.com/apache/pulsar-client-cpp.git

@@ -47,6 +47,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           sh_checker_comment: true
+          sh_checker_exclude: pulsar-client-sys/pulsar-client-cpp
           sh_checker_checkbashisms_enable: true
 
       - name: Run nixpkgs-fmt
