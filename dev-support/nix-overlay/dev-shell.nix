@@ -30,7 +30,6 @@ mkShell {
       sccache
       cargo-deny
       cargo-edit
-      cargo-tarpaulin
       cargo-udeps
 
       cmake
@@ -55,6 +54,9 @@ mkShell {
       libiconv
     ] ++ lib.optionals stdenv.isDarwin [
       darwin.apple_sdk.frameworks.SystemConfiguration
+    ] ++ lib.optionals (stdenv.isx86_64 && stdenv.isLinux) [
+      # Officially cargo-tarpaulin only supports x86_64-linux (ref: https://github.com/NixOS/nixpkgs/pull/173049)
+      cargo-tarpaulin
     ];
 
   shellHook = ''
