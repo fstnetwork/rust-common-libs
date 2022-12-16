@@ -9,6 +9,7 @@ in
 mkShell {
   buildInputs = with pkgs;
     [
+      llvmPackages.clang
       clang-tools
       codespell
       nixpkgs-fmt
