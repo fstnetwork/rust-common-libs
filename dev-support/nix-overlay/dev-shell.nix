@@ -3,8 +3,6 @@
 let
   llvmPackages = pkgs.llvmPackages_13;
   clang-tools = pkgs.clang-tools.override { inherit llvmPackages; };
-  nodejs = pkgs.nodejs-16_x;
-  yarn = pkgs.yarn.override { inherit nodejs; };
 in
 mkShell {
   buildInputs = with pkgs;
@@ -14,10 +12,8 @@ mkShell {
       codespell
       nixpkgs-fmt
 
-      yarn
       nodePackages."@commitlint/cli"
       nodePackages.prettier
-      nodePackages.sql-formatter
 
       convco
 
@@ -43,12 +39,6 @@ mkShell {
       checkbashisms
       shellcheck
       shfmt
-
-      # Helm chart testing
-      chart-testing
-      kubernetes-helm
-      yamale
-      yamllint
 
       # TODO: figure out who use libiconv
       libiconv
