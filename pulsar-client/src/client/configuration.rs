@@ -26,7 +26,7 @@ use crate::{
     client,
     error::Result,
     native::{NativeDrop, NativePointer},
-    util,
+    utils,
 };
 
 unsafe impl NativeDrop for NativeClientConfiguration {
@@ -81,7 +81,7 @@ impl ClientConfiguration {
         let timeout =
             unsafe { pulsar_client_configuration_get_operation_timeout_seconds(self.as_ptr()) };
 
-        util::convert_duration_from_ffi_c_int_seconds(timeout).expect("FFI: non-negative field")
+        utils::convert_duration_from_ffi_c_int_seconds(timeout).expect("FFI: non-negative field")
     }
 
     /// Set timeout on client operations (subscribe, create producer, close,
@@ -93,7 +93,7 @@ impl ClientConfiguration {
     /// # Errors
     /// TODO: document
     pub fn set_operation_timeout(&mut self, timeout: Duration) -> Result<()> {
-        let timeout = util::convert_duration_to_ffi_c_int_seconds(timeout)?;
+        let timeout = utils::convert_duration_to_ffi_c_int_seconds(timeout)?;
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe {
             pulsar_client_configuration_set_operation_timeout_seconds(self.as_ptr(), timeout);
@@ -159,11 +159,11 @@ impl ClientConfiguration {
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         let use_tls = unsafe { pulsar_client_configuration_is_use_tls(self.as_ptr()) };
 
-        util::convert_bool_from_ffi_c_int(use_tls)
+        utils::convert_bool_from_ffi_c_int(use_tls)
     }
 
     pub fn set_use_tls(&mut self, use_tls: bool) {
-        let use_tls = util::convert_bool_to_ffi(use_tls);
+        let use_tls = utils::convert_bool_to_ffi(use_tls);
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe {
             pulsar_client_configuration_set_use_tls(self.as_ptr(), use_tls);
@@ -178,14 +178,14 @@ impl ClientConfiguration {
     // ))
     // };
     //
-    // util::convert_from_ffi_path(path)
+    // utils::convert_from_ffi_path(path)
     // }
     //
     // pub fn set_tls_private_key_file_path<P>(&mut self, tls_key_file_path: &P) ->
     // Result<()> where
     // P: AsRef<Path> + ?Sized,
     // {
-    // let path = util::convert_to_ffi_path(tls_key_file_path.as_ref())?;
+    // let path = utils::convert_to_ffi_path(tls_key_file_path.as_ref())?;
     // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
     // unsafe {
     // pulsar_client_configuration_set_tls_private_key_file_path(
@@ -205,14 +205,14 @@ impl ClientConfiguration {
     // ))
     // };
     //
-    // util::convert_from_ffi_path(path)
+    // utils::convert_from_ffi_path(path)
     // }
     //
     // pub fn set_tls_certificate_file_path<P>(&mut self, tls_key_file_path: &P) ->
     // Result<()> where
     // P: AsRef<Path> + ?Sized,
     // {
-    // let path = util::convert_to_ffi_path(tls_key_file_path.as_ref())?;
+    // let path = utils::convert_to_ffi_path(tls_key_file_path.as_ref())?;
     // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
     // unsafe {
     // pulsar_client_configuration_set_tls_certificate_file_path(
@@ -232,7 +232,7 @@ impl ClientConfiguration {
             CStr::from_ptr(pulsar_client_configuration_get_tls_trust_certs_file_path(self.as_ptr()))
         };
 
-        util::convert_path_from_ffi_c_str(path)
+        utils::convert_path_from_ffi_c_str(path)
     }
 
     /// # Errors
@@ -241,7 +241,7 @@ impl ClientConfiguration {
     where
         P: AsRef<Path> + ?Sized,
     {
-        let path = util::convert_path_to_ffi_c_str(tls_key_file_path.as_ref())?;
+        let path = utils::convert_path_to_ffi_c_str(tls_key_file_path.as_ref())?;
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe {
             pulsar_client_configuration_set_tls_trust_certs_file_path(self.as_ptr(), path.as_ptr());
@@ -256,11 +256,11 @@ impl ClientConfiguration {
         let allow_insecure =
             unsafe { pulsar_client_configuration_is_tls_allow_insecure_connection(self.as_ptr()) };
 
-        util::convert_bool_from_ffi_c_int(allow_insecure)
+        utils::convert_bool_from_ffi_c_int(allow_insecure)
     }
 
     pub fn set_tls_allow_insecure_connection(&mut self, allow_insecure: bool) {
-        let allow_insecure = util::convert_bool_to_ffi(allow_insecure);
+        let allow_insecure = utils::convert_bool_to_ffi(allow_insecure);
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe {
             pulsar_client_configuration_set_tls_allow_insecure_connection(
@@ -276,11 +276,11 @@ impl ClientConfiguration {
         let validate_hostname =
             unsafe { pulsar_client_configuration_is_validate_hostname(self.as_ptr()) };
 
-        util::convert_bool_from_ffi_c_int(validate_hostname)
+        utils::convert_bool_from_ffi_c_int(validate_hostname)
     }
 
     pub fn set_validate_hostname(&mut self, validate_hostname: bool) {
-        let validate_hostname = util::convert_bool_to_ffi(validate_hostname);
+        let validate_hostname = utils::convert_bool_to_ffi(validate_hostname);
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe {
             pulsar_client_configuration_set_validate_hostname(self.as_ptr(), validate_hostname);
@@ -301,7 +301,7 @@ impl ClientConfiguration {
     /// # Errors
     /// TODO: document
     pub fn set_stats_interval(&mut self, interval: Duration) -> Result<()> {
-        let interval = util::convert_duration_to_ffi_c_uint_seconds(interval)?;
+        let interval = utils::convert_duration_to_ffi_c_uint_seconds(interval)?;
 
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe {

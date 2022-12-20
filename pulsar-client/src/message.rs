@@ -1,15 +1,20 @@
-use std::{collections::HashMap, ffi::CStr, fmt, slice};
+use std::{
+    collections::HashMap,
+    ffi::{c_char, c_void, CStr},
+    fmt, slice,
+};
 
 use pulsar_client_sys::{
-    pulsar_message_free, pulsar_message_get_data, pulsar_message_get_length,
+    pulsar_message_create, pulsar_message_free, pulsar_message_get_data, pulsar_message_get_length,
     pulsar_message_get_message_id, pulsar_message_get_partitionKey, pulsar_message_get_properties,
     pulsar_message_get_topic_name, pulsar_message_has_partition_key, pulsar_message_id_free,
-    pulsar_message_id_str, Message as NativeMessage, MessageId as NativeMessageId,
+    pulsar_message_id_str, pulsar_message_set_content, pulsar_message_set_property,
+    Message as NativeMessage, MessageId as NativeMessageId,
 };
 
 use crate::{
     native::{NativeDrop, NativePointer},
-    stl, util,
+    stl, utils,
 };
 
 unsafe impl NativeDrop for NativeMessageId {
@@ -28,6 +33,8 @@ pub struct MessageId {
 }
 
 impl MessageId {
+    pub(crate) const fn new(inner: NativePointer<NativeMessageId>) -> Self { Self { inner } }
+
     pub(crate) const fn as_ptr(&self) -> *mut NativeMessageId { self.inner.as_ptr() }
 }
 
@@ -52,10 +59,52 @@ pub struct Message {
     inner: NativePointer<NativeMessage>,
 }
 
+impl Default for Message {
+    fn default() -> Self {
+        let ptr = unsafe {
+            let message = pulsar_message_create();
+            NativePointer::new_unchecked(message)
+        };
+
+        Self::from(ptr)
+    }
+}
+
+impl From<NativePointer<NativeMessage>> for Message {
+    fn from(ptr: NativePointer<NativeMessage>) -> Self { Self { inner: ptr } }
+}
+
 impl Message {
     pub(crate) const fn new(inner: NativePointer<NativeMessage>) -> Self { Self { inner } }
 
     pub(crate) const fn as_ptr(&self) -> *mut NativeMessage { self.inner.as_ptr() }
+
+    #[must_use]
+    pub fn with_content(data: &[u8]) -> Self {
+        let inner = unsafe {
+            let message = pulsar_message_create();
+            pulsar_message_set_content(message, data.as_ptr() as *mut c_void, data.len());
+            NativePointer::new_unchecked(message)
+        };
+
+        Self::from(inner)
+    }
+
+    pub fn set_content(&self, data: &[u8]) {
+        unsafe {
+            pulsar_message_set_content(self.as_ptr(), data.as_ptr() as *mut c_void, data.len());
+        }
+    }
+
+    pub fn set_property(&self, name: &str, value: &str) {
+        unsafe {
+            pulsar_message_set_property(
+                self.as_ptr(),
+                name.as_ptr().cast::<c_char>(),
+                value.as_ptr().cast::<c_char>(),
+            );
+        }
+    }
 
     #[must_use]
     pub fn get_properties(&self) -> HashMap<String, String> {
@@ -85,14 +134,14 @@ impl Message {
         let inner =
             unsafe { NativePointer::new_unchecked(pulsar_message_get_message_id(self.as_ptr())) };
 
-        MessageId { inner }
+        MessageId::new(inner)
     }
 
     #[must_use]
     pub fn get_partition_key(&self) -> Option<String> {
         let has_partition_key = unsafe { pulsar_message_has_partition_key(self.as_ptr()) };
 
-        if util::convert_bool_from_ffi_c_int(has_partition_key) {
+        if utils::convert_bool_from_ffi_c_int(has_partition_key) {
             let c_str = unsafe { CStr::from_ptr(pulsar_message_get_partitionKey(self.as_ptr())) };
             Some(c_str.to_string_lossy().into_owned())
         } else {

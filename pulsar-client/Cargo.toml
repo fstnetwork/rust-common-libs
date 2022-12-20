@@ -22,3 +22,7 @@ url = "2"
 
 [dev-dependencies]
 tracing-subscriber = "0.3"
+
+[[example]]
+name = "multi-topic-producer"
+path = "examples/multi_topic_producer.rs"

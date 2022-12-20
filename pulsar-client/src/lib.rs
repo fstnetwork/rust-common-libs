@@ -153,7 +153,7 @@ pub mod consumer;
 pub mod error;
 pub mod message;
 mod native;
-mod producer;
+pub mod producer;
 mod reader;
 mod stl;
 mod utils;

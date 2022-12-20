@@ -36,6 +36,9 @@ pub enum Error {
     #[snafu(display("consumer name `{consumer_name}` is not valid: {source}"))]
     InvalidConsumerName { consumer_name: Cow<'static, str>, source: FfiError },
 
+    #[snafu(display("producer name `{producer_name}` is not valid: {source}"))]
+    InvalidProducerName { producer_name: Cow<'static, str>, source: FfiError },
+
     #[snafu(display("subscription name `{subscription_name}` is not valid: {source}"))]
     InvalidSubscriptionName { subscription_name: Cow<'static, str>, source: FfiError },
 
@@ -50,6 +53,12 @@ pub enum Error {
 
     #[snafu(display("subscribe too many topics: {source}"))]
     SubscribeTooManyTopics { source: FfiError },
+
+    #[snafu(display("create producer error for {topic}: {source}"))]
+    CreateProducer { topic: String, source: ResultCode },
+
+    #[snafu(display("lookup partitioned {topic}: {source}"))]
+    LookupPartitionedTopic { topic: String, source: ResultCode },
 
     #[snafu(display("receive error: {source}"))]
     Receive { source: ResultCode },
