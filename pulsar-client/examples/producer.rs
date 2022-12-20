@@ -1,6 +1,5 @@
 use pulsar_client::{
     client::{Client, ClientConfiguration},
-    message::Message,
     producer::ProducerConfiguration,
 };
 use tracing::Level;
@@ -22,9 +21,7 @@ async fn main() {
         client.create_producer("persistent://public/default/my-topic2", &config).await.unwrap();
 
     for i in 0..10 {
-        let message = Message::with_content(format!("doge-cry: {i}").as_bytes());
-
-        let message_id = producer.send(message).await.unwrap();
+        let message_id = producer.send(format!("doge-cry: {i}")).await.unwrap();
         tracing::info!("id: {}", message_id);
     }
 }

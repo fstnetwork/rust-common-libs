@@ -1,4 +1,5 @@
 mod configuration;
+mod message;
 mod multi_topic;
 
 use std::{ffi::c_void, sync::Arc};
@@ -16,11 +17,13 @@ use crate::{
     client::ClientInner,
     error,
     error::Result,
-    message::{Message, MessageId},
+    message::{MessageId, SerializeMessage},
     native::{NativeDrop, NativePointer},
 };
 
-pub use self::{configuration::ProducerConfiguration, multi_topic::MultiTopicProducer};
+pub use self::{
+    configuration::ProducerConfiguration, message::Message, multi_topic::MultiTopicProducer,
+};
 
 unsafe impl NativeDrop for NativeProducer {
     const DROP: unsafe extern "C" fn(*mut Self) = pulsar_producer_free;
@@ -42,9 +45,13 @@ impl Producer {
 
     /// # Errors
     // TODO: document
-    pub async fn send(&self, message: Message) -> Result<MessageId> {
+    pub async fn send<Message>(&self, message: Message) -> Result<MessageId>
+    where
+        Message: SerializeMessage,
+    {
         let (tx, rx) = oneshot::channel::<Result<MessageId, ResultCode>>();
 
+        let message = crate::message::Message::from(Message::serialize_message(message)?);
         unsafe {
             pulsar_producer_send_async(
                 self.as_ptr(),

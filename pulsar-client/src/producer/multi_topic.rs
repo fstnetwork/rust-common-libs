@@ -5,7 +5,7 @@ use tokio::sync::RwLock;
 use crate::{
     client::Client,
     error::Result,
-    message::{Message, MessageId},
+    message::{MessageId, SerializeMessage},
     producer::{Producer, ProducerConfiguration},
 };
 
@@ -55,20 +55,25 @@ impl MultiTopicProducer {
     /// # Errors
     ///
     /// if can not send messages
-    pub async fn send<T>(&self, topic: T, message: Message) -> Result<MessageId>
+    pub async fn send<Topic, Message>(&self, topic: Topic, message: Message) -> Result<MessageId>
     where
-        T: Into<String>,
+        Topic: Into<String>,
+        Message: SerializeMessage,
     {
         let topic = topic.into();
 
-        if let Some(producer) = self.producers.read().await.get(&topic) {
-            return producer.send(message).await;
+        // unlock the read-write lock immediately after checking the existence of
+        // `topic`
+        {
+            if let Some(producer) = self.producers.read().await.get(&topic) {
+                return producer.send(message).await;
+            }
         }
 
         let producer = self.client.create_producer(&topic, &self.configuration).await?;
         let result = producer.send(message).await;
 
-        // drop the read-write lock immediately after inserting
+        // unlock the read-write lock immediately after inserting
         {
             self.producers.write().await.insert(topic, producer);
         }
