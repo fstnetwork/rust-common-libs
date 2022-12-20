@@ -190,12 +190,8 @@ impl Drop for Consumer {
         tracing::trace!("Closing");
         let code = unsafe { pulsar_consumer_close(&mut *self.inner) };
         match ResultCode::from(code) {
-            ResultCode::Ok => {
-                tracing::trace!("Closed");
-            }
-            code => {
-                tracing::warn!("Error closing: {code}");
-            }
+            ResultCode::Ok => tracing::trace!("Closed"),
+            code => tracing::warn!("Error closing: {code}"),
         }
     }
 }

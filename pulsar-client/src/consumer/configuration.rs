@@ -30,7 +30,7 @@ use crate::{
     error,
     error::Result,
     native::{NativeDrop, NativePointer},
-    util,
+    utils,
 };
 
 unsafe impl NativeDrop for NativeConsumerConfiguration {
@@ -143,13 +143,13 @@ impl ConsumerConfiguration {
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         let interval = unsafe { pulsar_consumer_get_unacked_messages_timeout_ms(self.as_ptr()) };
 
-        util::convert_duration_from_ffi_c_long_millis(interval).expect("FFI: non-negative field")
+        utils::convert_duration_from_ffi_c_long_millis(interval).expect("FFI: non-negative field")
     }
 
     /// # Errors
     /// TODO: document
     pub fn set_unacked_messages_timeout(&mut self, timeout: Duration) -> Result<()> {
-        let timeout = util::convert_duration_to_ffi_u64_millis(timeout)?;
+        let timeout = utils::convert_duration_to_ffi_u64_millis(timeout)?;
 
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe { pulsar_consumer_set_unacked_messages_timeout_ms(self.as_ptr(), timeout) };
@@ -165,13 +165,13 @@ impl ConsumerConfiguration {
         let millis =
             unsafe { pulsar_configure_get_negative_ack_redelivery_delay_ms(self.as_ptr()) };
 
-        util::convert_duration_from_ffi_c_long_millis(millis).expect("FFI: non-negative field")
+        utils::convert_duration_from_ffi_c_long_millis(millis).expect("FFI: non-negative field")
     }
 
     /// # Errors
     /// TODO: document
     pub fn set_negative_ack_redelivery_delay(&mut self, delay: Duration) -> Result<()> {
-        let delay = util::convert_duration_to_ffi_c_long_millis(delay)?;
+        let delay = utils::convert_duration_to_ffi_c_long_millis(delay)?;
 
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe { pulsar_configure_set_negative_ack_redelivery_delay_ms(self.as_ptr(), delay) };
@@ -184,13 +184,13 @@ impl ConsumerConfiguration {
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         let millis = unsafe { pulsar_configure_get_ack_grouping_time_ms(self.as_ptr()) };
 
-        util::convert_duration_from_ffi_c_long_millis(millis).expect("FFI: non-negative field")
+        utils::convert_duration_from_ffi_c_long_millis(millis).expect("FFI: non-negative field")
     }
 
     /// # Errors
     /// TODO: document
     pub fn set_ack_grouping_time(&mut self, time: Duration) -> Result<()> {
-        let time = util::convert_duration_to_ffi_c_long_millis(time)?;
+        let time = utils::convert_duration_to_ffi_c_long_millis(time)?;
 
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe { pulsar_configure_set_ack_grouping_time_ms(self.as_ptr(), time) };
@@ -209,11 +209,11 @@ impl ConsumerConfiguration {
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         let compacted = unsafe { pulsar_consumer_is_read_compacted(self.as_ptr()) };
 
-        util::convert_bool_from_ffi_c_int(compacted)
+        utils::convert_bool_from_ffi_c_int(compacted)
     }
 
     pub fn set_read_compacted(&mut self, compacted: bool) {
-        let compacted = util::convert_bool_to_ffi(compacted);
+        let compacted = utils::convert_bool_to_ffi(compacted);
 
         // SAFETY: FFI ‒ pointers are valid, it doesn't take ownership; qed
         unsafe {
