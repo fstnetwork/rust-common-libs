@@ -11,8 +11,8 @@ use tracing::instrument;
 use url::Url;
 
 use pulsar_client_sys::{
-    pulsar_client_close, pulsar_client_create, pulsar_client_create_producer, pulsar_client_free,
-    pulsar_client_get_topic_partitions_async, pulsar_client_subscribe_async,
+    pulsar_client_close, pulsar_client_create, pulsar_client_create_producer_async,
+    pulsar_client_free, pulsar_client_get_topic_partitions_async, pulsar_client_subscribe_async,
     pulsar_client_subscribe_multi_topics_async, Client as NativeClient, Consumer as NativeConsumer,
     LogLevel, Producer as NativeProducer, RawResultCode, ResultCode, StringList,
 };
@@ -51,6 +51,24 @@ impl Drop for ClientInner {
         }
     }
 }
+
+// NOTE:`NativeProducerPointer` is internal use only
+type NativeProducerPointer = NativePointer<NativeProducer>;
+
+// SAFETY: the pointer is passed with `tokio::sync::oneshot`
+unsafe impl Send for NativeProducerPointer {}
+
+// SAFETY: the pointer is passed with `tokio::sync::oneshot`
+unsafe impl Sync for NativeProducerPointer {}
+
+// NOTE:`NativeConsumerPointer` is internal use only
+type NativeConsumerPointer = NativePointer<NativeConsumer>;
+
+// SAFETY: the pointer is passed with `tokio::sync::oneshot`
+unsafe impl Send for NativeConsumerPointer {}
+
+// SAFETY: the pointer is passed with `tokio::sync::oneshot`
+unsafe impl Sync for NativeConsumerPointer {}
 
 #[derive(Clone, Debug)]
 pub struct Client {
@@ -114,68 +132,31 @@ impl Client {
         topic: &str,
         configuration: &ProducerConfiguration,
     ) -> Result<Producer> {
-        let (producer, result) = {
+        let (tx, rx) = oneshot::channel::<Result<NativeProducerPointer, ResultCode>>();
+
+        {
             let topic = CString::new(topic)
                 .context(error::InvalidCStringSnafu)
                 .with_context(|_| error::InvalidTopicSnafu { topic: topic.to_owned() })?;
 
-            tokio::task::block_in_place(|| {
-                let mut producer: *mut NativeProducer = std::ptr::null_mut();
-                let result = unsafe {
-                    pulsar_client_create_producer(
-                        self.as_ptr(),
-                        topic.as_ptr(),
-                        configuration.as_ptr(),
-                        &mut producer,
-                    )
-                };
+            unsafe {
+                pulsar_client_create_producer_async(
+                    self.as_ptr(),
+                    topic.as_ptr(),
+                    configuration.as_ptr(),
+                    Some(create_producer_callback),
+                    Box::into_raw(Box::new(tx)).cast(),
+                );
+            }
+        }
 
-                (producer, result)
-            })
-        };
-
-        let producer = ResultCode::from(result)
-            .err_or_else(|| unsafe { NativePointer::new_unchecked(producer) })
+        let producer = rx
+            .await
+            .expect("tx must not drop in FFI; qed")
             .with_context(|_| error::CreateProducerSnafu { topic: topic.to_string() })?;
 
         Ok(Producer::new(producer, self.inner.clone()))
     }
-
-    // /// # Errors
-    // // TODO: document
-    // pub async fn producer(
-    //     &self,
-    //     topic: &str,
-    //     configuration: &ProducerConfiguration,
-    // ) -> Result<Producer> {
-    //     let (tx, rx) = oneshot::channel::<Result<NativePointer<NativeProducer>,
-    // ResultCode>>();
-    //
-    //     {
-    //         let topic = CString::new(topic)
-    //             .context(error::InvalidCStringSnafu)
-    //             .with_context(|_| error::InvalidTopicSnafu { topic:
-    // topic.to_owned() })?;
-    //
-    //         unsafe {
-    //             pulsar_client_create_producer_async(
-    //                 self.as_ptr(),
-    //                 topic.as_ptr(),
-    //                 configuration.as_ptr(),
-    //                 Some(create_producer_callback),
-    //                 Box::into_raw(Box::new(tx)).cast(),
-    //             );
-    //         }
-    //     }
-    //
-    //     let producer = rx
-    //         .await
-    //         .expect("tx must not drop in FFI; qed")
-    //         .with_context(|_| error::CreateProducerSnafu { topic:
-    // topic.to_string() })?;
-    //
-    //     Ok(Producer::new(producer, self.inner.clone()))
-    // }
 
     /// # Errors
     /// TODO: document
@@ -185,7 +166,7 @@ impl Client {
         subscription_name: &str,
         configuration: &ConsumerConfiguration,
     ) -> Result<Consumer> {
-        let (tx, rx) = oneshot::channel::<Result<NativePointer<NativeConsumer>, ResultCode>>();
+        let (tx, rx) = oneshot::channel::<Result<NativeConsumerPointer, ResultCode>>();
 
         {
             let topic = CString::new(topic)
@@ -319,9 +300,7 @@ unsafe extern "C" fn subscribe_callback(
     ctx: *mut c_void,
 ) {
     let tx = unsafe {
-        Box::from_raw(
-            ctx.cast::<oneshot::Sender<Result<NativePointer<NativeConsumer>, ResultCode>>>(),
-        )
+        Box::from_raw(ctx.cast::<oneshot::Sender<Result<NativeConsumerPointer, ResultCode>>>())
     };
 
     let result =
@@ -330,23 +309,20 @@ unsafe extern "C" fn subscribe_callback(
     let _send = tx.send(result);
 }
 
-// unsafe extern "C" fn create_producer_callback(
-//     result: RawResultCode,
-//     producer: *mut NativeProducer,
-//     ctx: *mut c_void,
-// ) {
-//     let tx = unsafe {
-//         Box::from_raw(
-//             ctx.cast::<oneshot::Sender<Result<NativePointer<NativeProducer>,
-// ResultCode>>>(),         )
-//     };
-//
-//     let result =
-//         ResultCode::from(result).err_or_else(|| unsafe {
-// NativePointer::new_unchecked(producer) });
-//
-//     let _send = tx.send(result);
-// }
+unsafe extern "C" fn create_producer_callback(
+    result: RawResultCode,
+    producer: *mut NativeProducer,
+    ctx: *mut c_void,
+) {
+    let tx = unsafe {
+        Box::from_raw(ctx.cast::<oneshot::Sender<Result<NativeProducerPointer, ResultCode>>>())
+    };
+
+    let result =
+        ResultCode::from(result).err_or_else(|| unsafe { NativePointer::new_unchecked(producer) });
+
+    let _send = tx.send(result);
+}
 
 unsafe extern "C" fn get_partitions_callback(
     result: RawResultCode,
