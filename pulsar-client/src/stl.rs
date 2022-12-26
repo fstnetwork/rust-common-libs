@@ -38,8 +38,6 @@ pub fn convert_string_map_from_ffi(
         .collect()
 }
 
-// FIXME: remove allow
-#[allow(dead_code)]
 pub fn convert_string_list_from_ffi(native_list: &NativePointer<StringList>) -> Vec<String> {
     let len = unsafe { pulsar_string_list_size(native_list.as_ptr()) };
 

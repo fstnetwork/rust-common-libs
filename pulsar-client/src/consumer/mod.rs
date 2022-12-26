@@ -12,9 +12,10 @@ use tracing::instrument;
 use pulsar_client_sys::{
     pulsar_consumer_acknowledge_async, pulsar_consumer_acknowledge_async_id,
     pulsar_consumer_acknowledge_cumulative_async, pulsar_consumer_acknowledge_cumulative_async_id,
-    pulsar_consumer_close, pulsar_consumer_free, pulsar_consumer_negative_acknowledge,
-    pulsar_consumer_negative_acknowledge_id, pulsar_consumer_receive_async,
-    Consumer as NativeConsumer, Message as NativeMessage, RawResultCode, ResultCode,
+    pulsar_consumer_close, pulsar_consumer_free, pulsar_consumer_is_connected,
+    pulsar_consumer_negative_acknowledge, pulsar_consumer_negative_acknowledge_id,
+    pulsar_consumer_receive_async, Consumer as NativeConsumer, Message as NativeMessage,
+    RawResultCode, ResultCode,
 };
 
 use crate::{
@@ -163,12 +164,16 @@ impl Consumer {
         });
     }
 
+    #[must_use]
+    pub fn is_connected(&self) -> bool {
+        task::block_in_place(|| unsafe { pulsar_consumer_is_connected(self.as_ptr()) != 0 })
+    }
+
     // pauseMessageListener
     // resumeMessageListener
     // redeliverUnacknowledgedMessages
     // getBrokerConsumerStats
     // seek
-    // isConnected
     // getLastMessageId
 }
 
@@ -190,12 +195,8 @@ impl Drop for Consumer {
         tracing::trace!("Closing");
         let code = unsafe { pulsar_consumer_close(&mut *self.inner) };
         match ResultCode::from(code) {
-            ResultCode::Ok => {
-                tracing::trace!("Closed");
-            }
-            code => {
-                tracing::warn!("Error closing: {code}");
-            }
+            ResultCode::Ok => tracing::trace!("Closed"),
+            code => tracing::warn!("Error closing: {code}"),
         }
     }
 }
