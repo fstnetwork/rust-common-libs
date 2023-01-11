@@ -1,6 +1,7 @@
 mod shutdown_state;
-mod signal;
 mod signal_watcher;
+#[cfg(windows)]
+mod windows;
 mod worker;
 
 use std::{future::Future, pin::Pin, time::Duration};
@@ -10,7 +11,6 @@ use tokio::task::JoinHandle;
 
 use self::shutdown_state::ShutdownState;
 pub use self::{
-    signal::SignalCompatExt,
     signal_watcher::{Builder as SignalWatcherBuilder, SignalWatcher},
     worker::Worker,
 };
@@ -133,7 +133,6 @@ mod tests {
 
     use std::{
         net::{Ipv4Addr, SocketAddr},
-        process,
         time::Duration,
     };
 
@@ -213,8 +212,9 @@ mod tests {
         })
     }
 
+    #[cfg(unix)]
     fn spawn_killer_thread() {
-        let pid = process::id();
+        let pid = std::process::id();
         let sig = libc::SIGTERM;
 
         std::thread::spawn(move || {
@@ -287,6 +287,7 @@ mod tests {
         Ok(())
     }
 
+    #[cfg(unix)]
     #[tokio::test]
     #[cfg_attr(miri, ignore)]
     async fn test_with_axum_server_and_dummy_workers_with_unix_signal() -> Result<(), Error> {
