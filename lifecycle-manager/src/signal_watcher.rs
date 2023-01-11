@@ -5,13 +5,9 @@ use futures::{
     stream,
     stream::{BoxStream, StreamExt},
 };
-use tokio::{
-    signal::unix::{signal, SignalKind},
-    sync::watch,
-    task::JoinHandle,
-};
+use tokio::{sync::watch, task::JoinHandle};
 
-use crate::{ShutdownSignal, ShutdownState, SignalCompatExt};
+use crate::{ShutdownSignal, ShutdownState};
 
 #[derive(Debug)]
 pub struct SignalWatcher {
@@ -93,12 +89,7 @@ impl Builder {
         };
 
         let mut signal_stream = {
-            type Signal = BoxStream<'static, ()>;
-
-            let mut streams: Vec<Signal> = vec![
-                signal(SignalKind::terminate())?.compat().boxed(),
-                signal(SignalKind::interrupt())?.compat().boxed(),
-            ];
+            let mut streams = shutdown_signals()?;
 
             if let Some(shutdown_signal) = internal_shutdown_signal {
                 streams.push(shutdown_signal.into_stream().boxed());
@@ -145,4 +136,29 @@ impl Builder {
 
         Ok(SignalWatcher { join_handle: Some(join_handle) })
     }
+}
+
+#[cfg(unix)]
+fn shutdown_signals() -> io::Result<Vec<BoxStream<'static, ()>>> {
+    use tokio::signal::unix::{signal, SignalKind};
+    use tokio_stream::wrappers::SignalStream;
+
+    Ok(vec![
+        SignalStream::new(signal(SignalKind::terminate())?).boxed(),
+        SignalStream::new(signal(SignalKind::interrupt())?).boxed(),
+    ])
+}
+
+#[cfg(windows)]
+fn shutdown_signals() -> io::Result<Vec<BoxStream<'static, ()>>> {
+    use tokio::signal::windows::{ctrl_c, ctrl_close, ctrl_shutdown};
+    use tokio_stream::wrappers::CtrlCStream;
+
+    use crate::windows::{CtrlCloseStream, CtrlShutdownStream};
+
+    Ok(vec![
+        CtrlCStream::new(ctrl_c()?).boxed(),
+        CtrlCloseStream::new(ctrl_close()?).boxed(),
+        CtrlShutdownStream::new(ctrl_shutdown()?).boxed(),
+    ])
 }
