@@ -22,4 +22,4 @@ serde_json = "1"
 snafu = { version = "0.7", default-features = false, features = ["std", "futures"] }
 
 [dev-dependencies]
-serde_yaml = "0.8"
+serde_yaml = "0.9"
