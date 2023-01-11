@@ -20,7 +20,7 @@ tracing = "0.1.34"
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "sync", "time"] }
 
-axum = "0.5.3"
+axum = "0.6.2"
 
 libc = "0.2.124"
 portpicker = "0.1.1"
