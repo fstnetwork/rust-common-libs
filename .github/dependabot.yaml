@@ -7,11 +7,13 @@ updates:
       day: sunday
       time: "21:00"
     open-pull-requests-limit: 87
+    target-branch: develop
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
       interval: weekly
       day: sunday
       time: "21:00"
     open-pull-requests-limit: 87
+    target-branch: develop
