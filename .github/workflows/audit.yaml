@@ -17,12 +17,12 @@ on:
 env:
   CI: 1
   CARGO_TERM_COLOR: always
-  NIGHTLY_TOOLCHAIN: nightly-2022-04-13
+  NIGHTLY_TOOLCHAIN: nightly-2022-10-12
 
 jobs:
   audit:
     name: Security audit
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -46,7 +46,7 @@ jobs:
 
   deny:
     name: Check dependencies
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         checks:

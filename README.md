@@ -8,6 +8,8 @@
   Kubernetes structural schema utilities for [`schemars`](https://crates.io/crates/schemars)
 - [`lifecycle-manager`](./lifecycle-manager)
   a utility for spawning background workers and handling UNIX signals
+- [`pulsar-client`](./pulsar-client) Apache Pulsar client library for Rust based on libpulsar
+- [`pulsar-client-sys`](./pulsar-client-sys) Native bindings to the libpulsar
 
 ## Development
 

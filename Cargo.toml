@@ -3,4 +3,6 @@
 members = [
   "k8s-structural-schema",
   "lifecycle-manager",
+  "pulsar-client",
+  "pulsar-client-sys",
 ]

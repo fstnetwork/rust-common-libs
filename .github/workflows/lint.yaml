@@ -13,12 +13,12 @@ on:
 env:
   CI: 1
   CARGO_TERM_COLOR: always
-  NIGHTLY_TOOLCHAIN: nightly-2022-04-13
+  NIGHTLY_TOOLCHAIN: nightly-2022-10-12
 
 jobs:
   format:
     name: Lint format
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -42,11 +42,12 @@ jobs:
           fi
 
       - name: Run shfmt, shellcheck, checkbashisms
-        uses: luizm/action-sh-checker@v0.4.0
+        uses: luizm/action-sh-checker@v0.5.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           sh_checker_comment: true
+          sh_checker_exclude: pulsar-client-sys/pulsar-client-cpp
           sh_checker_checkbashisms_enable: true
 
       - name: Run nixpkgs-fmt
@@ -61,20 +62,20 @@ jobs:
 
   commit:
     name: Lint commit
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Run commitlint
-        uses: wagoid/commitlint-github-action@v4.1.12
+        uses: wagoid/commitlint-github-action@v5.3.0
         with:
           firstParent: false
 
   codespell:
     name: Codespell
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 

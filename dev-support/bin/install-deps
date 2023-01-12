@@ -28,14 +28,23 @@ if [[ $KERNEL == "linux" ]]; then
     info "Using apt-get to install dependencies"
     apt-get update
     apt-get install --no-install-recommends -y \
+      clang \
       protobuf-compiler \
       make \
       file
+
+    info "Install pulsar client"
+    PULSAR_CLIENT_URL=https://archive.apache.org/dist/pulsar/pulsar-client-cpp-3.1.0/deb-x86_64/apache-pulsar-client.deb
+    curl -LSs -o apache-pulsar-client.deb ${PULSAR_CLIENT_URL}
+    apt install -y ./apache-pulsar-client.deb
+    rm -fv ./apache-pulsar-client.deb
+
     ;;
 
   alpine)
     info "Using apk to install dependencies"
     apk add --no-cache -U \
+      clang \
       protobuf \
       musl-dev \
       make \

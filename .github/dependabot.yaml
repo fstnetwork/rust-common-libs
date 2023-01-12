@@ -1,17 +1,19 @@
 version: 2
 updates:
   - package-ecosystem: cargo
-    directory: "/"
-    # labels: []
+    directory: /
     schedule:
-      interval: "daily"
+      interval: weekly
+      day: sunday
       time: "21:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 87
+    target-branch: develop
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    # labels: []
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "daily"
+      interval: weekly
+      day: sunday
       time: "21:00"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 87
+    target-branch: develop

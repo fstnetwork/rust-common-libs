@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+BINDGEN=bindgen
+
+$BINDGEN \
+  --allowlist-function "pulsar.*" \
+  --allowlist-type "_?pulsar.*|initial_position|token_supplier" \
+  --allowlist-var "pulsar.*|PULSAR_.*" \
+  --no-doc-comments \
+  --default-enum-style rust \
+  --no-rustfmt-bindings \
+  --output "${SCRIPT_DIR}"/../../pulsar-client-sys/src/bindings.rs \
+  "${SCRIPT_DIR}"/../../pulsar-client-sys/bindings.h \
+  -- \
+  -I"${SCRIPT_DIR}"/../../pulsar-client-sys/pulsar-client-cpp/include
+
+"${SCRIPT_DIR}"/format-rust
