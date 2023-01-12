@@ -22,7 +22,7 @@ env:
 jobs:
   audit:
     name: Security audit
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -46,7 +46,7 @@ jobs:
 
   deny:
     name: Check dependencies
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         checks:
