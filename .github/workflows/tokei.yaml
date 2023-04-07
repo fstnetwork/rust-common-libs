@@ -17,19 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
+          nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Install tokei
-        run: |
-          if ! command -v tokei &> /dev/null
-          then
-            cargo +stable install tokei
-          fi
+      - name: Install nixpkgs-fmt
+        run: nix profile install 'nixpkgs#tokei'
 
       - name: Run tokei
         id: tokei
