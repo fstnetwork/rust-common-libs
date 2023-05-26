@@ -18,7 +18,7 @@ pub struct Message {
     pub partition_key: Option<String>,
 
     /// key to decide partition for the message
-    pub ordering_key: Option<Vec<u8>>,
+    pub ordering_key: Option<String>,
 
     /// Override namespace's replication
     pub replicate_to: Vec<String>,
