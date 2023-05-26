@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export TOOLCHAIN=nightly-2022-10-12
+export TOOLCHAIN=nightly-2023-05-25
 export CARGO_ARGS=(
   --workspace
   --bins

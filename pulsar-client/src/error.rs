@@ -98,16 +98,12 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut iter = self.0.iter();
         // handle empty
-        let first = if let Some(first) = iter.next() {
-            first
-        } else {
+        let Some(first) = iter.next() else {
             return f.write_str("[]");
         };
 
         // handle single
-        let second = if let Some(second) = iter.next() {
-            second
-        } else {
+        let Some(second) = iter.next() else {
             return first.fmt(f);
         };
 
