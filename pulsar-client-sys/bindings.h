@@ -15,4 +15,3 @@
 #include <pulsar/c/string_map.h>
 // FIXME: version is generate in build time
 // #include <pulsar/c/version.h>
-

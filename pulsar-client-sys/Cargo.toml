@@ -18,4 +18,3 @@ dynamic-linking = []
 [build-dependencies]
 bindgen = { version = "0.63", optional = true }
 cmake = "0.1"
-
