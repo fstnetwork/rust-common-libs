@@ -86,7 +86,7 @@ impl Message {
     pub fn with_content(data: &[u8]) -> Self {
         let inner = unsafe {
             let message = pulsar_message_create();
-            pulsar_message_set_content(message, data.as_ptr() as *mut c_void, data.len());
+            pulsar_message_set_content(message, data.as_ptr().cast::<c_void>(), data.len());
             NativePointer::new_unchecked(message)
         };
 
@@ -113,7 +113,7 @@ impl Message {
 
     pub fn set_content(&self, data: &[u8]) {
         unsafe {
-            pulsar_message_set_content(self.as_ptr(), data.as_ptr() as *mut c_void, data.len());
+            pulsar_message_set_content(self.as_ptr(), data.as_ptr().cast::<c_void>(), data.len());
         }
     }
 
@@ -272,7 +272,7 @@ impl SerializeMessage for producer::Message {
 
 impl SerializeMessage for () {
     fn serialize_message(_input: Self) -> Result<producer::Message, Error> {
-        Ok(producer::Message { ..Default::default() })
+        Ok(producer::Message::default())
     }
 }
 

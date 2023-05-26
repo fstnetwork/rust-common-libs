@@ -266,7 +266,7 @@ mod tests {
 
         LifecycleManager::new()
             .with_custom_shutdown(shutdown_signal)
-            .add_worker(AxumServer::default())
+            .add_worker(AxumServer)
             .serve()
             .await?;
         Ok(())
@@ -279,7 +279,7 @@ mod tests {
 
         LifecycleManager::new()
             .with_custom_shutdown(shutdown_signal)
-            .add_worker(AxumServer::default())
+            .add_worker(AxumServer)
             .add_worker(DummyWorker::new(1))
             .serve()
             .await?;
@@ -294,7 +294,7 @@ mod tests {
         spawn_killer_thread();
 
         LifecycleManager::<Error>::new()
-            .add_worker(AxumServer::default())
+            .add_worker(AxumServer)
             .add_worker(DummyWorker::new(0))
             .serve()
             .await?;
