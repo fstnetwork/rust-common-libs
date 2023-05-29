@@ -1,9 +1,11 @@
 use std::{
     collections::HashMap,
-    ffi::{c_char, c_void, CStr},
+    ffi::{c_void, CStr, CString},
     fmt, slice,
     string::FromUtf8Error,
 };
+
+use snafu::ResultExt;
 
 use pulsar_client_sys::{
     pulsar_message_create, pulsar_message_free, pulsar_message_get_data, pulsar_message_get_length,
@@ -15,6 +17,7 @@ use pulsar_client_sys::{
 };
 
 use crate::{
+    error,
     error::Error,
     native::{NativeDrop, NativePointer},
     producer, stl, utils,
@@ -93,14 +96,17 @@ impl Message {
         Self::from(inner)
     }
 
-    pub fn set_property(&self, name: &str, value: &str) {
+    /// # Errors
+    /// return an error if the supplied bytes contain an internal 0 byte
+    pub fn set_property(&self, name: &str, value: &str) -> Result<(), Error> {
+        let name = CString::new(name).context(error::InvalidCStringSnafu)?;
+        let value = CString::new(value).context(error::InvalidCStringSnafu)?;
+
         unsafe {
-            pulsar_message_set_property(
-                self.as_ptr(),
-                name.as_ptr().cast::<c_char>(),
-                value.as_ptr().cast::<c_char>(),
-            );
+            pulsar_message_set_property(self.as_ptr(), name.as_ptr(), value.as_ptr());
         }
+
+        Ok(())
     }
 
     #[must_use]
@@ -152,13 +158,16 @@ impl Message {
         }
     }
 
-    pub fn set_partition_key(&self, partition_key: &str) {
+    /// # Errors
+    /// return an error if the supplied bytes contain an internal 0 byte
+    pub fn set_partition_key(&self, partition_key: &str) -> Result<(), Error> {
+        let partition_key = CString::new(partition_key).context(error::InvalidCStringSnafu)?;
+
         unsafe {
-            pulsar_message_set_partition_key(
-                self.as_ptr(),
-                partition_key.as_ptr().cast::<c_char>(),
-            );
+            pulsar_message_set_partition_key(self.as_ptr(), partition_key.as_ptr());
         }
+
+        Ok(())
     }
 
     pub fn set_event_time(&self, event_timestamp: u64) {
@@ -167,10 +176,16 @@ impl Message {
         }
     }
 
-    pub fn set_ordering_key(&self, ordering_key: &[u8]) {
+    /// # Errors
+    /// return an error if the supplied bytes contain an internal 0 byte
+    pub fn set_ordering_key(&self, ordering_key: &str) -> Result<(), Error> {
+        let ordering_key = CString::new(ordering_key).context(error::InvalidCStringSnafu)?;
+
         unsafe {
-            pulsar_message_set_ordering_key(self.as_ptr(), ordering_key.as_ptr().cast::<c_char>());
+            pulsar_message_set_ordering_key(self.as_ptr(), ordering_key.as_ptr());
         }
+
+        Ok(())
     }
 
     // getOrderingKey
@@ -196,8 +211,10 @@ unsafe impl Send for Message {}
 #[allow(clippy::non_send_fields_in_send_ty)]
 unsafe impl Sync for Message {}
 
-impl From<producer::Message> for Message {
-    fn from(
+impl TryFrom<producer::Message> for Message {
+    type Error = Error;
+
+    fn try_from(
         producer::Message {
             payload,
             properties,
@@ -207,20 +224,20 @@ impl From<producer::Message> for Message {
             event_time,
             schema_version,
         }: producer::Message,
-    ) -> Self {
+    ) -> Result<Self, Self::Error> {
         let message = Self::default();
 
         message.set_content(payload.as_ref());
         for (name, value) in properties {
-            message.set_property(&name, &value);
+            message.set_property(&name, &value)?;
         }
 
         if let Some(partition_key) = partition_key {
-            message.set_partition_key(&partition_key);
+            message.set_partition_key(&partition_key)?;
         }
 
         if let Some(ordering_key) = ordering_key {
-            message.set_ordering_key(&ordering_key);
+            message.set_ordering_key(&ordering_key)?;
         }
 
         if let Some(event_time) = event_time {
@@ -232,7 +249,7 @@ impl From<producer::Message> for Message {
             // message.set_schema_version(&schema_version);
         }
 
-        message
+        Ok(message)
     }
 }
 

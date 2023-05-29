@@ -1,7 +1,8 @@
 use std::{
     borrow::Cow,
     ffi::{CStr, NulError},
-    fmt::{self, Write},
+    fmt,
+    fmt::Write,
     num::TryFromIntError,
     path::Path,
     str::Utf8Error,
@@ -18,6 +19,9 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
 pub enum Error {
+    #[snafu(display("{source}"))]
+    Ffi { source: Box<FfiError> },
+
     #[snafu(display("duration {duration:?} is not valid {unit}: {source}"))]
     InvalidDuration { duration: Box<Duration>, unit: Cow<'static, str>, source: FfiError },
 
@@ -65,6 +69,11 @@ pub enum Error {
 
     #[snafu(display("acknowledge error: {source}"))]
     Acknowledge { source: ResultCode },
+}
+
+impl From<FfiError> for Error {
+    #[inline]
+    fn from(source: FfiError) -> Self { Self::Ffi { source: Box::new(source) } }
 }
 
 #[derive(Debug, Snafu)]

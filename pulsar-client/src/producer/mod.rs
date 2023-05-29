@@ -51,7 +51,7 @@ impl Producer {
     {
         let (tx, rx) = oneshot::channel::<Result<MessageId, ResultCode>>();
 
-        let message = crate::message::Message::from(Message::serialize_message(message)?);
+        let message = crate::message::Message::try_from(Message::serialize_message(message)?)?;
         unsafe {
             pulsar_producer_send_async(
                 self.as_ptr(),
