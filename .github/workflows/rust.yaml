@@ -22,12 +22,6 @@ on:
 
 env:
   CI: 1
-  # sccache
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  SCCACHE_REGION: us-west-2
-  SCCACHE_BUCKET: sccache-us-west-2
-  SCCACHE_S3_USE_SSL: true
   # Rust toolchain
   NIGHTLY_TOOLCHAIN: nightly-2023-05-25
   CARGO_TERM_COLOR: always
@@ -84,31 +78,16 @@ jobs:
           override: true
           components: rustfmt
 
-      - name: Sccache
+      - name: Setup Sccache
         uses: ./.github/actions/sccache
-
-      - name: Pre Cache
-        run: |
-          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
-
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo-udeps
         uses: aig787/cargo-udeps-action@v1
+        env:
+          CARGO_BUILD_RUSTC_WRAPPER: sccache
         with:
           version: latest
           args: ${{ env.CARGO_ARGS }}
-
-      - name: Post Sccache
-        run: |
-          sccache -s
 
   clippy:
     name: Clippy
@@ -132,21 +111,8 @@ jobs:
           override: true
           components: clippy,rustfmt
 
-      - name: Sccache
+      - name: Setup Sccache
         uses: ./.github/actions/sccache
-
-      - name: Pre Cache
-        run: |
-          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
-
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: cargo clippy --version
         run: |
@@ -154,13 +120,11 @@ jobs:
 
       - name: Run cargo clippy
         uses: actions-rs/clippy-check@v1
+        env:
+          CARGO_BUILD_RUSTC_WRAPPER: sccache
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: ${{ env.CARGO_ARGS }}
-
-      - name: Post Sccache
-        run: |
-          sccache -s
 
   test:
     name: Test
@@ -195,31 +159,19 @@ jobs:
           override: true
           components: rustfmt
 
-      - name: Sccache
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Setup Sccache
         uses: ./.github/actions/sccache
-
-      - name: Pre Cache
-        run: |
-          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
-
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
+        env:
+          CARGO_BUILD_RUSTC_WRAPPER: sccache
         with:
-          command: test
-          args: --workspace --no-fail-fast ${{ matrix.mode == 'release' && '--release' || '' }} -- --nocapture --test -Z unstable-options --report-time
-
-      - name: Post Sccache
-        run: |
-          sccache -s
+          command: nextest
+          args: run ${{ env.CARGO_ARGS }} --no-fail-fast ${{ matrix.mode == 'release' && '--release' || '' }}
 
   miri:
     name: Miri
@@ -255,20 +207,7 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.toolchain == 'nightly' && env.NIGHTLY_TOOLCHAIN || matrix.toolchain }}
           override: true
-          components: miri,rust-src,rustfmt
-
-      - name: Pre Cache
-        run: |
-          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
-
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          components: miri,rust-src
 
       - name: cargo miri --version
         run: |
@@ -307,28 +246,11 @@ jobs:
       - name: Sccache
         uses: ./.github/actions/sccache
 
-      - name: Pre Cache
-        run: |
-          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
-
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
       - name: Run cargo doc
         uses: actions-rs/cargo@v1
         with:
           command: doc
           args: --workspace --no-deps --bins --all-features
-
-      - name: Post Sccache
-        run: |
-          sccache -s
 
   # coverage:
   #   name: Coverage

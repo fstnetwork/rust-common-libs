@@ -1,17 +1,15 @@
-name: Sccache
+name: Setup Sccache
 
 runs:
   using: composite
   steps:
+    - uses: actions/github-script@v6
+      with:
+        script: |
+          core.exportVariable('SCCACHE_GHA_ENABLED', 'true');
+
+    - uses: mozilla-actions/sccache-action@v0.0.3
+
     - shell: bash
       run: |
-        if ! command -v sccache &> /dev/null
-        then
-          curl -fsSL "https://github.com/mozilla/sccache/releases/download/v0.2.15/sccache-v0.2.15-x86_64-unknown-linux-musl.tar.gz" | tar zvx
-          sudo mv -v sccache-v0.2.15-x86_64-unknown-linux-musl/sccache /usr/bin/sccache
-          rm -rf sccache*
-          sudo chmod +x /usr/bin/sccache
-        fi
-        echo -e "[build]\nrustc-wrapper = \"sccache\"" | tee ~/.cargo/config
-        sccache -V
-        sccache -z
+        sccache --stop-server || true
