@@ -16,5 +16,5 @@ default = ["bindgen", "dynamic-linking"]
 dynamic-linking = []
 
 [build-dependencies]
-bindgen = { version = "0.65", optional = true }
+bindgen = { version = "0.68", optional = true }
 cmake = "0.1"
