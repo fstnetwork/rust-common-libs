@@ -25,4 +25,4 @@ axum = "0.6"
 
 libc = "0.2"
 portpicker = "0.1"
-snafu = "0.7"
+snafu = "0.8"

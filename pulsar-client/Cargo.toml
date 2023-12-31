@@ -17,7 +17,7 @@ tracing = "0.1"
 
 tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 
-snafu = "0.7"
+snafu = "0.8"
 url = "2"
 
 [dev-dependencies]
